@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import com.trademo.app.model.User;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, String> {
+public interface UserRepository extends JpaRepository<User, Long> {
     // String is the type of user ID (primary key)
 }

@@ -24,12 +24,37 @@ public class TradeController {
     private StockService stockService;
 
     // This list will temporarily act like a database (demo purpose)
-    private List<String> virtualTrades = new ArrayList<>();
+    private final List<String> virtualTrades = new ArrayList<>();
+
+    @GetMapping("/")
+    public String home() {
+        return "Welcome to Trademo! Your virtual stock trading platform is up and running.";
+    }
 
     // GET method: See all virtual trades (temporary DB)
     @GetMapping
     public List<String> getAllTrades() {
         return virtualTrades;
+    }
+
+    @GetMapping("/test-stock/{symbol}")
+    public String testStockPrice(@PathVariable String symbol) {
+        try {
+            double price = stockService.getStockPrice(symbol);
+            return "Current price of " + symbol + " is ₹" + price;
+        } catch (Exception e) {
+            return "Error fetching price: " + e.getMessage();
+        }
+    }
+
+    @GetMapping("/price/{symbol}")
+    public String getStockPrice(@PathVariable String symbol) {
+        try {
+            double price = stockService.getStockPrice(symbol);
+            return "Current price of " + symbol.toUpperCase() + " is ₹" + price;
+        } catch (Exception e) {
+            return "Error fetching price: " + e.getMessage();
+        }
     }
 
     // POST method: Add a new trade (for demo only, stores raw string)
@@ -55,9 +80,9 @@ public class TradeController {
     public String buyStock(@RequestBody BuyRequest request) {
         try {
             return stockService.buyStock(
-                String.valueOf(request.getUserId()),
-                request.getStockSymbol(),
-                request.getQuantity()
+                    String.valueOf(request.getUserId()),
+                    request.getStockSymbol(),
+                    request.getQuantity()
             );
         } catch (Exception e) {
             return "Error: " + e.getMessage();
