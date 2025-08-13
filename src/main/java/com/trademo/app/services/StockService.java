@@ -1,6 +1,7 @@
 package com.trademo.app.services;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,89 +14,106 @@ import com.trademo.app.repository.UserRepository;
 @Service
 public class StockService {
 
-    @Autowired
-    private StockApiService stockApiService; // External API for live stock prices
+    private static final String TYPE_BUY = "BUY";
+    private static final String TYPE_SELL = "SELL";
 
     @Autowired
-    private UserRepository userRepository;  // Repository to access User table
+    private StockApiService stockApiService;
 
     @Autowired
-    private TransactionRepository transactionRepository;  // To save transactions
+    private UserRepository userRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     public String buyStock(String userId, String stockSymbol, int quantity) {
-        // Step 0: Validate quantity
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than 0");
-        }
+        validateQuantity(quantity);
+        User user = getUserById(userId);
 
-        // Step 1: Get current price
         double stockPrice = stockApiService.getCurrentPrice(stockSymbol);
         double totalCost = stockPrice * quantity;
 
-        // Step 2: Find user by ID (converted safely from String to Long)
-        User user = userRepository.findById(Long.valueOf(userId))
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // Step 3: Check for sufficient balance
         if (user.getVirtualBalance() < totalCost) {
-            throw new RuntimeException("Insufficient balance");
+            throw new IllegalArgumentException("Insufficient balance to buy " + quantity + " shares.");
         }
 
-        // Step 4: Deduct balance
-        double updatedBalance = user.getVirtualBalance() - totalCost;
-        user.setVirtualBalance(updatedBalance);
+        // Deduct balance
+        user.setVirtualBalance(user.getVirtualBalance() - totalCost);
         userRepository.save(user);
 
-        // Step 5: Record the transaction
-        StockTransaction transaction = new StockTransaction();
-        transaction.setUser(user);
-        transaction.setStockSymbol(stockSymbol);
-        transaction.setQuantity(quantity);
-        transaction.setPrice(stockPrice);
-        transaction.setType("BUY");
-        transaction.setDateTime(LocalDateTime.now());
+        // Save transaction
+        saveTransaction(user, stockSymbol, quantity, stockPrice, TYPE_BUY);
 
-        transactionRepository.save(transaction);
-
-        return "✅ Successfully bought " + quantity + " shares of " + stockSymbol + " at ₹" + stockPrice;
+        return "✅ Bought " + quantity + " shares of " + stockSymbol + " at ₹" + stockPrice;
     }
 
     public double getStockPrice(String symbol) {
-        return stockApiService.getCurrentPrice(symbol); // Assuming stockApiService is already injected
+        return stockApiService.getCurrentPrice(symbol);
     }
 
     public String sellStock(String userId, String stockSymbol, int quantity) {
-        // Step 0: Validate input
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than 0");
+        validateQuantity(quantity);
+        User user = getUserById(userId);
+
+        // Check ownership
+        int totalOwned = getTotalOwnedShares(user, stockSymbol);
+        if (totalOwned < quantity) {
+            throw new IllegalArgumentException("Not enough shares to sell. You own only " + totalOwned);
         }
 
-        // Step 1: Get current stock price
         double stockPrice = stockApiService.getCurrentPrice(stockSymbol);
         double totalRevenue = stockPrice * quantity;
 
-        // Step 2: Fetch user by ID (parsed from String to Long)
-        User user = userRepository.findById(Long.valueOf(userId))
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        // 🔁 (Optional) You could add logic to check if the user actually owns enough of the stock to sell
-        // Step 3: Add money to user's balance
-        double updatedBalance = user.getVirtualBalance() + totalRevenue;
-        user.setVirtualBalance(updatedBalance);
+        // Add to balance
+        user.setVirtualBalance(user.getVirtualBalance() + totalRevenue);
         userRepository.save(user);
 
-        // Step 4: Save transaction
+        // Save transaction
+        saveTransaction(user, stockSymbol, quantity, stockPrice, TYPE_SELL);
+
+        return "✅ Sold " + quantity + " shares of " + stockSymbol +
+               " at ₹" + stockPrice + " | Total Revenue: ₹" + totalRevenue;
+    }
+
+    // ===== Helper Methods =====
+
+    private User getUserById(String userId) {
+        try {
+            Long id = Long.parseLong(userId);
+            return userRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found for ID: " + userId));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid user ID: " + userId);
+        }
+    }
+
+    private void validateQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+    }
+
+    private void saveTransaction(User user, String stockSymbol, int quantity, double price, String type) {
         StockTransaction transaction = new StockTransaction();
         transaction.setUser(user);
         transaction.setStockSymbol(stockSymbol);
         transaction.setQuantity(quantity);
-        transaction.setPrice(stockPrice);
-        transaction.setType("SELL");
+        transaction.setPrice(price);
+        transaction.setType(type);
         transaction.setDateTime(LocalDateTime.now());
-
         transactionRepository.save(transaction);
-
-        return "✅ Successfully sold " + quantity + " shares of " + stockSymbol + " at ₹" + stockPrice;
     }
 
+    private int getTotalOwnedShares(User user, String stockSymbol) {
+        List<StockTransaction> transactions = transactionRepository.findByUserAndStockSymbol(user, stockSymbol);
+        int totalOwned = 0;
+        for (StockTransaction t : transactions) {
+            if (TYPE_BUY.equalsIgnoreCase(t.getType())) {
+                totalOwned += t.getQuantity();
+            } else if (TYPE_SELL.equalsIgnoreCase(t.getType())) {
+                totalOwned -= t.getQuantity();
+            }
+        }
+        return totalOwned;
+    }
 }
