@@ -1,7 +1,6 @@
 package com.trademo.app.services;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -52,31 +51,41 @@ public class StockService {
     }
 
     public String sellStock(String userId, String stockSymbol, int quantity) {
+
+        System.out.println("Sell method started in StockService for stock: " + stockSymbol);//-->>>>>>>>>>>>>>>>
+
         validateQuantity(quantity);
         User user = getUserById(userId);
 
-        // Check ownership
+        // Step 1: Check how many shares the user owns
         int totalOwned = getTotalOwnedShares(user, stockSymbol);
         if (totalOwned < quantity) {
             throw new IllegalArgumentException("Not enough shares to sell. You own only " + totalOwned);
         }
 
+        // Step 2: Get current stock price
         double stockPrice = stockApiService.getCurrentPrice(stockSymbol);
         double totalRevenue = stockPrice * quantity;
 
-        // Add to balance
+        // Step 3: Update balance
         user.setVirtualBalance(user.getVirtualBalance() + totalRevenue);
         userRepository.save(user);
 
         // Save transaction
         saveTransaction(user, stockSymbol, quantity, stockPrice, TYPE_SELL);
 
-        return "✅ Sold " + quantity + " shares of " + stockSymbol +
-               " at ₹" + stockPrice + " | Total Revenue: ₹" + totalRevenue;
+        return "✅ Sold " + quantity + " shares of " + stockSymbol
+                + " at ₹" + stockPrice + " | Total Revenue: ₹" + totalRevenue;
     }
 
     // ===== Helper Methods =====
+    private void validateQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+    }
 
+    // Fetch user by ID and handle exceptions
     private User getUserById(String userId) {
         try {
             Long id = Long.parseLong(userId);
@@ -87,12 +96,14 @@ public class StockService {
         }
     }
 
-    private void validateQuantity(int quantity) {
-        if (quantity <= 0) {
-            throw new IllegalArgumentException("Quantity must be greater than 0");
-        }
+    // Calculate total shares owned by the user for a specific stock
+    private int getTotalOwnedShares(User user, String stockSymbol) {
+        return transactionRepository.findByUserAndStockSymbol(user, stockSymbol).stream()
+                .mapToInt(t -> t.getType().equalsIgnoreCase("BUY") ? t.getQuantity() : -t.getQuantity())
+                .sum();
     }
 
+    // Save a stock transaction
     private void saveTransaction(User user, String stockSymbol, int quantity, double price, String type) {
         StockTransaction transaction = new StockTransaction();
         transaction.setUser(user);
@@ -102,18 +113,5 @@ public class StockService {
         transaction.setType(type);
         transaction.setDateTime(LocalDateTime.now());
         transactionRepository.save(transaction);
-    }
-
-    private int getTotalOwnedShares(User user, String stockSymbol) {
-        List<StockTransaction> transactions = transactionRepository.findByUserAndStockSymbol(user, stockSymbol);
-        int totalOwned = 0;
-        for (StockTransaction t : transactions) {
-            if (TYPE_BUY.equalsIgnoreCase(t.getType())) {
-                totalOwned += t.getQuantity();
-            } else if (TYPE_SELL.equalsIgnoreCase(t.getType())) {
-                totalOwned -= t.getQuantity();
-            }
-        }
-        return totalOwned;
     }
 }

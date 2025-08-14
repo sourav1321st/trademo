@@ -8,24 +8,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.trademo.app.dto.BuyRequest;
 import com.trademo.app.services.StockService;
 
 @RestController
 @RequestMapping("/api/trades")
 public class TradeController {
 
-    // Injecting the StockService to handle real buy logic
     @Autowired
     private StockService stockService;
 
-    // This list will temporarily act like a database (demo purpose)
     private final List<String> virtualTrades = new ArrayList<>();
 
     @GetMapping("/")
@@ -33,7 +28,6 @@ public class TradeController {
         return "Welcome to Trademo! Your virtual stock trading platform is up and running.";
     }
 
-    // GET method: See all virtual trades (temporary DB)
     @GetMapping
     public List<String> getAllTrades() {
         return virtualTrades;
@@ -59,14 +53,13 @@ public class TradeController {
         }
     }
 
-    // POST method: Add a new trade (for demo only, stores raw string)
-    @PostMapping
-    public String createTrade(@RequestBody String trade) {
+    // CREATE TRADE (now GET with params)
+    @GetMapping("/create")
+    public String createTrade(@RequestParam String trade) {
         virtualTrades.add(trade);
         return "Trade added successfully: " + trade;
     }
 
-    // DELETE method: Remove trade by index from temporary list
     @DeleteMapping("/{index}")
     public String deleteTrade(@PathVariable int index) {
         if (index >= 0 && index < virtualTrades.size()) {
@@ -77,27 +70,27 @@ public class TradeController {
         }
     }
 
-    @PostMapping("/sell")
+    // SELL STOCK (GET for browser)
+    @GetMapping("/sell")
     public ResponseEntity<String> sellStock(
             @RequestParam String userId,
             @RequestParam String stockSymbol,
             @RequestParam int quantity) {
         String result = stockService.sellStock(userId, stockSymbol, quantity);
+        System.out.println("Sell method started for " + stockSymbol);
         return ResponseEntity.ok(result);
     }
 
-    // POST method: Real API for buying stock using virtual balance
-    @PostMapping("/buy")
-    public String buyStock(@RequestBody BuyRequest request) {
+    // BUY STOCK (GET for browser)
+    @GetMapping("/buy")
+    public String buyStock(
+            @RequestParam String userId,
+            @RequestParam String stockSymbol,
+            @RequestParam int quantity) {
         try {
-            return stockService.buyStock(
-                    String.valueOf(request.getUserId()),
-                    request.getStockSymbol(),
-                    request.getQuantity()
-            );
+            return stockService.buyStock(userId, stockSymbol, quantity);
         } catch (Exception e) {
             return "Error: " + e.getMessage();
         }
     }
-
 }
