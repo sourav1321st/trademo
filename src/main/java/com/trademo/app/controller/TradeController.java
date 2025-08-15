@@ -1,7 +1,9 @@
 package com.trademo.app.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,32 +30,13 @@ public class TradeController {
         return "Welcome to Trademo! Your virtual stock trading platform is up and running.";
     }
 
+    // ---- Demo-only endpoints (keep or remove) ----
     @GetMapping
     public List<String> getAllTrades() {
         return virtualTrades;
     }
+// CREATE TRADE (now GET with params)
 
-    @GetMapping("/test-stock/{symbol}")
-    public String testStockPrice(@PathVariable String symbol) {
-        try {
-            double price = stockService.getStockPrice(symbol);
-            return "Current price of " + symbol + " is ₹" + price;
-        } catch (Exception e) {
-            return "Error fetching price: " + e.getMessage();
-        }
-    }
-
-    @GetMapping("/price/{symbol}")
-    public String getStockPrice(@PathVariable String symbol) {
-        try {
-            double price = stockService.getStockPrice(symbol);
-            return "Current price of " + symbol.toUpperCase() + " is ₹" + price;
-        } catch (Exception e) {
-            return "Error fetching price: " + e.getMessage();
-        }
-    }
-
-    // CREATE TRADE (now GET with params)
     @GetMapping("/create")
     public String createTrade(@RequestParam String trade) {
         virtualTrades.add(trade);
@@ -68,6 +51,31 @@ public class TradeController {
         } else {
             return "Invalid index";
         }
+    }
+
+    @GetMapping("/test-stock/{symbol}")
+    public String testStockPrice(@PathVariable String symbol) {
+        try {
+            double price = stockService.getStockPrice(symbol);
+            return "Current price of " + symbol + " is ₹" + price;
+        } catch (Exception e) {
+            return "Error fetching price: " + e.getMessage();
+        }
+    }
+
+    @GetMapping("/price/{symbol}")
+    public Map<String, Object> getStockPrice(@PathVariable String symbol) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            double price = stockService.getStockPrice(symbol);
+            response.put("symbol", symbol.toUpperCase());
+            response.put("price", price);
+            response.put("status", "success");
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+        }
+        return response;
     }
 
     // SELL STOCK (GET for browser)
