@@ -8,10 +8,10 @@
 </head>
 <body class="container mt-5">
   <h2>Login</h2>
-  <form method="post" th:action="@{/login}">
+  <form th:action="@{/login}" method="post">
     <div class="mb-3">
       <label>Username:</label>
-      <input type="text" name="username" class="form-control" required>
+      <input type="text" name="name" class="form-control" required>
     </div>
     <div class="mb-3">
       <label>Password:</label>
@@ -19,5 +19,15 @@
     </div>
     <button type="submit" class="btn btn-primary">Login</button>
   </form>
+
+  <!-- Optional error message -->
+  <div th:if="${param.error}" class="alert alert-danger mt-3">
+    Invalid username or password
+  </div>
+
+  <!-- Logout success message -->
+  <div th:if="${param.logout}" class="alert alert-success mt-3">
+    You have been logged out successfully.
+  </div>
 </body>
 </html>

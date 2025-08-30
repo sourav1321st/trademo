@@ -26,13 +26,4 @@ public class PageController {
         return "dashboard"; // Maps to dashboard.html
     }
 
-    @GetMapping("/login")
-    public String showLoginPage() {
-        return "login"; // Maps to login.html
-    }
-    @GetMapping("/register")
-    public String showRegisterPage() {
-        return "register"; // Maps to register.html
-    }
-
 }
