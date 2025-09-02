@@ -40,24 +40,24 @@ public class AuthController {
 
     // Handle login form submit
     @PostMapping("/login")
-public String processLogin(@RequestParam String name, 
-                           @RequestParam String password, 
-                           Model model) {
+    public String processLogin(@RequestParam String name,
+            @RequestParam String password,
+            Model model) {
 
-    User existingUser = userRepository.findByName(name);
+        User existingUser = userRepository.findByName(name);
 
-    if (existingUser == null) {
-        model.addAttribute("error", "User not found!");
-        return "login";
+        if (existingUser == null) {
+            model.addAttribute("error", "User not found!");
+            return "login";
+        }
+
+        if (existingUser.getPassword() == null
+                || !existingUser.getPassword().equals(password)) {
+            model.addAttribute("error", "Invalid password!");
+            return "login";
+        }
+
+        return "redirect:/dashboard";
     }
 
-    if (existingUser.getPassword() == null || 
-        !existingUser.getPassword().equals(password)) {
-        model.addAttribute("error", "Invalid password!");
-        return "login";
-    }
-
-    return "redirect:/dashboard";
-}
-    
 }
