@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.trademo.app.model.User;
 import com.trademo.app.repository.UserRepository;
 
+import jakarta.servlet.http.HttpSession;
+
 @Controller
 public class AuthController {
 
@@ -40,24 +42,31 @@ public class AuthController {
 
     // Handle login form submit
     @PostMapping("/login")
-    public String processLogin(@RequestParam String name,
+    public String processLogin(@RequestParam String email,
             @RequestParam String password,
+            HttpSession session,
             Model model) {
 
-        User existingUser = userRepository.findByName(name);
+        User existingUser = userRepository.findByEmail(email);
 
-        if (existingUser == null) {
-            model.addAttribute("error", "User not found!");
+        if (existingUser != null && existingUser.getPassword().equals(password)) {
+
+            session.setAttribute("loggedInUser", existingUser); // ✅ store user in session
+
+            // ✅ Put user details in model for dashboard
+            model.addAttribute("user", existingUser);
+            return "dashboard";  // directly load dashboard with user data
+        } else {
+            model.addAttribute("error", "Invalid email or password");
             return "login";
         }
 
-        if (existingUser.getPassword() == null
-                || !existingUser.getPassword().equals(password)) {
-            model.addAttribute("error", "Invalid password!");
-            return "login";
-        }
+    }
 
-        return "redirect:/dashboard";
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate(); // ✅ clears session data
+        return "redirect:/login?logout"; // redirect to login with a logout message
     }
 
 }

@@ -6,24 +6,24 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class PageController {
 
-    @GetMapping("/home")
-    public String homePage() {
+    @GetMapping("/")
+    public String home() {
         return "home"; // maps to index.html in templates
     }
 
+    @GetMapping("/dashboard")
+    public String dashboard() {
+        return "dashboard"; // Maps to dashboard.html
+    }
+
     @GetMapping("/trade")
-    public String tradePage() {
+    public String trade() {
         return "trade";  // maps to trade.html in templates
     }
 
      @GetMapping("/portfolio")
-    public String showPortfolioPage() {
+    public String portfolio() {
         return "portfolio"; // Looks for portfolio.html
-    }
-
-    @GetMapping("/dashboard")
-    public String showDashboardPage() {
-        return "dashboard"; // Maps to dashboard.html
     }
 
 }

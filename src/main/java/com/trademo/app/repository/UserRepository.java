@@ -8,5 +8,5 @@ import com.trademo.app.model.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     // String is the type of user ID (primary key)
-    User findByName(String name);
+     User findByEmail(String email);
 }
