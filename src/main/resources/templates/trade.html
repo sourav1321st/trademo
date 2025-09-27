@@ -4,18 +4,62 @@
     <meta charset="UTF-8">
     <title>Trade Stocks</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .card { border: 1px solid #ccc; padding: 15px; margin: 15px 0; width: 350px; }
+        button { margin: 5px; padding: 8px 12px; cursor: pointer; }
+    </style>
 </head>
 <body>
-    <h1>Stock Price Checker</h1>
+    
+    <h1>📈 Trade Stocks </h1>
 
-    <!-- Input field -->
-    <input type="text" id="stockSymbol" placeholder="Enter stock symbol (e.g. INFY)">
-    <button onclick="getPrice()">Get Price</button>
+    <!-- Balance Display -->
+    <div class="card">
+        <h3>💰 Your Balance</h3>
+        <p id="balance">Loading...</p>
+        <button onclick="loadBalance()">Refresh Balance</button>
+    </div>
 
-    <!-- Result area -->
-    <p id="result"></p>
+    <!-- Stock Price Checker -->
+    <div class="card">
+        <h3>🔎 Stock Price Checker</h3>
+        <input type="text" id="stockSymbol" placeholder="Enter stock symbol (e.g. INFY)">
+        <button onclick="getPrice()">Get Price</button>
+        <p id="priceResult"></p>
+    </div>
+
+    <!-- Trading Section -->
+    <div class="card">
+        <h3>💹 Trade</h3>
+        <label>Stock Symbol:</label>
+        <input type="text" id="tradeSymbol" placeholder="e.g. INFY"><br><br>
+        
+        <label>Quantity:</label>
+        <input type="number" id="tradeQuantity" min="1" value="1"><br><br>
+
+        <!-- Hardcoding userId=1 for now -->
+        <button onclick="buyStock()">✅ Buy</button>
+        <button onclick="sellStock()">❌ Sell</button>
+
+        <p id="tradeResult"></p>
+    </div>
 
     <script>
+        const userId = 1; // For now fixed user (later we can make login system)
+
+        // ---- Load Balance ----
+        async function loadBalance() {
+            try {
+                const response = await fetch(`/api/users/${userId}/balance`);
+                const data = await response.json();
+                document.getElementById("balance").innerText = "₹" + data.balance.toFixed(2);
+            } catch (err) {
+                document.getElementById("balance").innerText = "Error loading balance";
+            }
+        }
+
+        // ---- Get Stock Price ----
         async function getPrice() {
             const symbol = document.getElementById("stockSymbol").value;
             if (!symbol) {
@@ -23,16 +67,57 @@
                 return;
             }
             try {
-                const response = await fetch(`/trademo/api/trades/price/${symbol}`);
-                if (!response.ok) {
-                    throw new Error("Stock not found");
+                const response = await fetch(`/api/trades/price/${symbol}`);
+                const data = await response.json();
+                if (data.status === "success") {
+                    document.getElementById("priceResult").innerText = 
+                        "Price of " + data.symbol + ": ₹" + data.price;
+                } else {
+                    document.getElementById("priceResult").innerText = "Error: " + data.message;
                 }
-                const price = await response.text();
-                document.getElementById("result").innerText = "Price of " + symbol + ": ₹" + price;
             } catch (error) {
-                document.getElementById("result").innerText = "Error: " + error.message;
+                document.getElementById("priceResult").innerText = "Error: " + error.message;
             }
         }
+
+        // ---- Buy Stock ----
+        async function buyStock() {
+            const symbol = document.getElementById("tradeSymbol").value;
+            const qty = document.getElementById("tradeQuantity").value;
+            if (!symbol || qty <= 0) {
+                alert("Enter valid symbol and quantity");
+                return;
+            }
+            try {
+                const response = await fetch(`/api/trades/buy?userId=${userId}&stockSymbol=${symbol}&quantity=${qty}`);
+                const result = await response.text();
+                document.getElementById("tradeResult").innerText = result;
+                loadBalance();
+            } catch (err) {
+                document.getElementById("tradeResult").innerText = "Error: " + err.message;
+            }
+        }
+
+        // ---- Sell Stock ----
+        async function sellStock() {
+            const symbol = document.getElementById("tradeSymbol").value;
+            const qty = document.getElementById("tradeQuantity").value;
+            if (!symbol || qty <= 0) {
+                alert("Enter valid symbol and quantity");
+                return;
+            }
+            try {
+                const response = await fetch(`/api/trades/sell?userId=${userId}&stockSymbol=${symbol}&quantity=${qty}`);
+                const result = await response.text();
+                document.getElementById("tradeResult").innerText = result;
+                loadBalance();
+            } catch (err) {
+                document.getElementById("tradeResult").innerText = "Error: " + err.message;
+            }
+        }
+
+        // Auto-load balance on page load
+        loadBalance();
     </script>
 </body>
 </html>
