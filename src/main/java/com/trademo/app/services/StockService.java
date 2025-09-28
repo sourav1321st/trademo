@@ -88,6 +88,7 @@ public class StockService {
     // Fetch user by ID and handle exceptions
     private User getUserById(String userId) {
         try {
+            @SuppressWarnings("UnnecessaryTemporaryOnConversionFromString")
             Long id = Long.parseLong(userId);
             return userRepository.findById(id)
                     .orElseThrow(() -> new IllegalArgumentException("User not found for ID: " + userId));
