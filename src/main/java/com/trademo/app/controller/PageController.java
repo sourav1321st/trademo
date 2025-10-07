@@ -21,9 +21,14 @@ public class PageController {
         return "trade";  // maps to trade.html in templates
     }
 
-     @GetMapping("/portfolio")
+    @GetMapping("/portfolio")
     public String portfolio() {
         return "portfolio"; // Looks for portfolio.html
+    }
+
+    @GetMapping("/wallet")
+    public String walletPage() {
+        return "wallet"; // loads wallet.html
     }
 
 }

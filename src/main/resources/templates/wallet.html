@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Wallet - Add Balance</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+
+    <h2 class="mb-4">💰 Wallet - Add Balance</h2>
+
+    <!-- STEP 1: Request OTP -->
+    <form method="post" action="/api/wallet/request-add-balance" class="mb-5">
+        <h5>Step 1: Verify Account</h5>
+        <div class="mb-3">
+            <label for="email-step1" class="form-label">Email:</label>
+            <input type="email" id="email-step1" name="email" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="password-step1" class="form-label">Password:</label>
+            <input type="password" id="password-step1" name="password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Request OTP</button>
+    </form>
+
+    <!-- STEP 2: Confirm OTP & Add Balance -->
+    <form method="post" action="/api/wallet/confirm-add-balance">
+        <h5>Step 2: Enter OTP & Amount</h5>
+        <div class="mb-3">
+            <label for="email-step2" class="form-label">Email:</label>
+            <input type="email" id="email-step2" name="email" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="otp-step2" class="form-label">OTP:</label>
+            <input type="text" id="otp-step2" name="otp" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label for="amount-step2" class="form-label">Amount to Add:</label>
+            <input type="number" step="0.01" id="amount-step2" name="amount" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-success">Confirm & Add Balance</button>
+    </form>
+
+</body>
+</html>

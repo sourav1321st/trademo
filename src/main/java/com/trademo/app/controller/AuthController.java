@@ -47,7 +47,7 @@ public class AuthController {
             HttpSession session,
             Model model) {
 
-        User existingUser = userRepository.findByEmail(email);
+        User existingUser = userRepository.findByEmail(email).orElse(null);
 
         if (existingUser != null && existingUser.getPassword().equals(password)) {
 

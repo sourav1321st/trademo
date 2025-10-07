@@ -4,9 +4,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.trademo.app.model.User;
+import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     // String is the type of user ID (primary key)
-     User findByEmail(String email);
+    //  User findByEmail(String email);
+     Optional<User> findByEmail(String email);
 }
+    

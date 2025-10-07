@@ -1,5 +1,8 @@
 package com.trademo.app.model;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -17,6 +20,11 @@ public class User {
     private String name;
     private String password;
     private String email;
+
+    private BigDecimal balance;   // default 0
+    private String otp;           // for temporary OTP storage
+    private LocalDateTime otpExpiry;  // to expire OTP in few minutes
+
 
     @Column(name = "virtual_balance")
     private double virtualBalance;
@@ -66,4 +74,28 @@ public class User {
         return email;
     }
 
+    public BigDecimal getBalance() {
+        return balance;
+    }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+    
+    public String getOtp() {
+        return otp;
+    }
+    
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
+    
+    public LocalDateTime getOtpExpiry() {
+        return otpExpiry;
+    }
+
+    public void setOtpExpiry(LocalDateTime otpExpiry) {
+        this.otpExpiry = otpExpiry;
+    }
+    
 }
